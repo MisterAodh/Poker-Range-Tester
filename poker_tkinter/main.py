@@ -2,7 +2,19 @@ import tkinter as tk
 import random
 import pandas as pd
 import os
+import sys
 
+def get_data_folder(folder_name):
+    if getattr(sys, 'frozen', False):
+        application_path = sys._MEIPASS
+    else:
+        application_path = os.path.dirname(os.path.abspath(__file__))
+
+    return os.path.join(application_path, folder_name)
+
+# Replace existing folder paths in your code
+dir_path = get_data_folder('Range_sets')
+attempts_folder = get_data_folder('attempts')
 def get_ranks():
     ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2']
     return ranks
@@ -23,6 +35,7 @@ class App(tk.Tk):
         self.geometry("800x600")
         self.frame = None
         self.show_frame(StartPage)
+        tk.Label(self, text="Made by Leo.Phelan", anchor="w", font=("Arial", 8)).pack(side="bottom", anchor="w")
 
 
     def show_frame(self, frame_class, *args):
@@ -38,7 +51,7 @@ class StartPage(tk.Frame):
         tk.Label(self, text="Start Page").pack()
 
         tk.Button(self, text="Create_Range", command=lambda: master.show_frame(CreationPokerPage)).pack()
-        dir_path = 'Range_sets'
+        dir_path = get_data_folder('Range_sets')
 
         for folder in os.listdir(dir_path):
             if os.path.isdir(os.path.join(dir_path, folder)):
@@ -46,8 +59,8 @@ class StartPage(tk.Frame):
 
                 tk.Button(self, text=button_text,
                           command=lambda folder=folder: master.show_frame(TestingPokerPage, folder)).pack()
-        for filename in os.listdir('attempts'):
-            file_path = os.path.join('attempts', filename)
+        for filename in os.listdir(get_data_folder('attempts')):
+            file_path = os.path.join(get_data_folder('attempts'), filename)
             if os.path.isfile(file_path):
                 os.remove(file_path)
 
@@ -56,7 +69,7 @@ class StartPage(tk.Frame):
 class TestingPokerPage(tk.Frame):
     def __init__(self, master, folder_name):
         self.folder_name = folder_name
-        self.location = 'Range_sets/' + folder_name
+        self.location = get_data_folder('Range_sets')+'/' + folder_name
         tk.Frame.__init__(self, master)
         top_frame = tk.Frame(self)
         top_frame.pack(side=tk.TOP, fill=tk.X)
@@ -93,7 +106,7 @@ class TestingPokerPage(tk.Frame):
         tk.Button(mark_button_frame, text="Correct Range", command=lambda: self.show_csv_on_grid(
             self.location + '/' + self.current_position.get() + '.csv')).pack(side=tk.LEFT)
         tk.Button(mark_button_frame, text="My Answer", command=lambda: self.show_csv_on_grid(
-            'attempts/' + self.current_position.get() + '_attempt.csv')).pack(side=tk.LEFT)
+            get_data_folder('attempts') +'/'+ self.current_position.get() + '_attempt.csv')).pack(side=tk.LEFT)
 
     def read_original_csv(self, csv_path):
         df = pd.read_csv(csv_path)
@@ -159,7 +172,7 @@ class TestingPokerPage(tk.Frame):
             lbl.config(bg='SystemButtonFace')
 
         df = pd.DataFrame(data, columns=['hands', 'toggle'])
-        file_name = f"attempts/{self.current_position.get()}_attempt.csv"
+        file_name = f"{get_data_folder('attempts')}/{self.current_position.get()}_attempt.csv"
         df.to_csv(file_name, index=False)
 
         original_data = self.read_original_csv(
@@ -233,7 +246,7 @@ class CreationPokerPage(tk.Frame):
 
     def create_directory(self):
         dir_name = self.range_name.get()
-        dir_path = os.path.join('Range_sets', dir_name)
+        dir_path = os.path.join(get_data_folder('Range_sets'), dir_name)
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
             self.current_directory = dir_path
